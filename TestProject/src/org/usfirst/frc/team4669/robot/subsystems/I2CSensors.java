@@ -1,6 +1,5 @@
 package org.usfirst.frc.team4669.robot.subsystems;
 
-import org.usfirst.frc.team4669.robot.Robot;
 import org.usfirst.frc.team4669.robot.subsystems.sensor.InfraredTOF;
 
 import edu.wpi.first.wpilibj.I2C.Port;
@@ -12,13 +11,15 @@ import edu.wpi.first.wpilibj.command.Subsystem;
 public class I2CSensors extends Subsystem {
     public InfraredTOF tofRight;
     public InfraredTOF tofLeft;
+    protected boolean leftEnb = false;
     
     public I2CSensors() {
 		super();
 		tofRight = new InfraredTOF(Port.kOnboard);
-		if (Robot.hasNavX) {
+		if (leftEnb) {
 			tofLeft = new InfraredTOF(Port.kMXP);
 		}
+		setup();
 	}
     
     public boolean setup() {
@@ -28,7 +29,7 @@ public class I2CSensors extends Subsystem {
 			e.printStackTrace();
 		}
     	boolean r = tofRight.setup();
-    	if (Robot.hasNavX) {
+    	if (leftEnb) {
     		if (r) {
     			r =  tofLeft.setup();
     		}
@@ -42,19 +43,23 @@ public class I2CSensors extends Subsystem {
     }
     
     protected int[] r2 = new int[2];
+    protected long startTime = 0;
     
-    public int[] getDistance() {
+    public void startMeasure() {
     	tofRight.startMeasure();
-    	if (Robot.hasNavX) {
+    	if (leftEnb) {
     		tofLeft.startMeasure();
     	}
-		try {
-			Thread.sleep(10);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+    	startTime = System.currentTimeMillis();
+    }
+
+    public boolean isMeasuring() {
+    	return System.currentTimeMillis() < startTime + 10;
+    }
+    
+    public int[] getDistance() {
     	r2[0] = tofRight.readMeasure();
-    	if (Robot.hasNavX) {
+    	if (leftEnb) {
     		r2[1] = tofLeft.readMeasure();
     	} else {
     		r2[1] = -1;

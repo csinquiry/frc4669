@@ -1,19 +1,17 @@
 package org.usfirst.frc.team4669.robot.subsystems;
 
-import org.usfirst.frc.team4669.robot.data.TimePos;
+import org.usfirst.frc.team4669.robot.data.TimePosF;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  *
  */
-public class TestLift1 extends TimePos {
+public class TestLift1F extends TimePosF {
 	public static double WHEEL_DIA = 1.75;
 	public static double ENC_COUNT = 360;
 	
-	public static double liftHeight = 0;
-
-	public TestLift1() {
+	public TestLift1F() {
 		super(3, false); // 4
 	}
 
@@ -27,8 +25,7 @@ public class TestLift1 extends TimePos {
 	
 	public void moveOff(double inches) {
 		double d = inches / WHEEL_DIA / Math.PI * 360*4;
-		liftHeight += d;
-		super.moveTo(liftHeight);
+		super.moveOff(d);
 		SmartDashboard.putNumber("end1", d);
 	}
 	

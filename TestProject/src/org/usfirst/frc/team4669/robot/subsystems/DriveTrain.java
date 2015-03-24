@@ -2,15 +2,16 @@ package org.usfirst.frc.team4669.robot.subsystems;
 
 import org.usfirst.frc.team4669.robot.data.DriveV;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  *
  */
 public class DriveTrain extends DriveV {
-	public static double WHEEL_DIA = 4;
-	public static double ENC_COUNT = 360;
-	public static double WHEELBASE= 22;
+	public static final double WHEEL_DIA = 4;
+	public static final double ENC_COUNT = 360;
+	public static final double WHEELBASE= 22;
 
 	public DriveTrain() {
 		super(4, false, 1, false); // 4
@@ -30,15 +31,25 @@ public class DriveTrain extends DriveV {
 	public void move(double inches) {
 		double d = inches / WHEEL_DIA / Math.PI * 360*4;
 		isTurn = false;
-		super.move(d);
+		super.move(d,true,true);
 		SmartDashboard.putNumber("end", d);
 	}
 	
 	public void turn(double angle) {
 		isTurn = true;
 		double d = WHEELBASE * Math.PI * angle / 360.0 / WHEEL_DIA / Math.PI * 360*4;
-		super.move(d);
+		super.move(d,true,true);
 		SmartDashboard.putNumber("end", d);
+	}
+
+	public void pivot(double angle, boolean isRight) {
+		isTurn = true;
+		double d = 2*WHEELBASE * Math.PI * angle / 360.0 / WHEEL_DIA / Math.PI * 360*4;
+		super.move(d,isRight,!isRight);
+		SmartDashboard.putNumber("end", d);
+	}
+
+	public void joystickDrive(Joystick leftJoystick, Joystick rightJoystick) {
 	}
 }
 

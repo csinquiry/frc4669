@@ -21,17 +21,17 @@ public class Lift extends Command {
     	dist = distance;
     }
 
-    public void moveTo(double pos) {
-    	Robot.lift.moveTo(pos);
+    public void moveOff(double pos) {
+    	Robot.lift.moveOff(pos);
     }
     
     // Called just before this Command runs the first time
     protected void initialize() {
     	Robot.lift.pidP = PIDParam.DRIVE_RIGHT;
-    	Robot.lift.maxV= 100;
-    	Robot.lift.acc= 100;
-       	Robot.lift.dec= 100;
-       	moveTo(dist);
+    	Robot.lift.maxV= 50;
+    	Robot.lift.acc= 50;
+       	Robot.lift.dec= 50;
+       	moveOff(dist);
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -52,6 +52,6 @@ public class Lift extends Command {
     // Called when another command which requires one or more of the same
     // subsystems is scheduled to run
     protected void interrupted() {
-    	Robot.lift.stop();
+    	Robot.lift.interrupted();
     }
 }

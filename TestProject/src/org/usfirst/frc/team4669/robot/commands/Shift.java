@@ -1,19 +1,19 @@
 package org.usfirst.frc.team4669.robot.commands;
 
+import org.usfirst.frc.team4669.robot.subsystems.DriveTrain;
+
 import edu.wpi.first.wpilibj.command.CommandGroup;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  *
  */
-public class AutoRun extends CommandGroup {
+public class Shift extends CommandGroup {
     
-    public  AutoRun() {
+    public  Shift(double dist) {
         // Add Commands here:
         // e.g. addSequential(new Command1());
         //      addSequential(new Command2());
         // these will run in order.
-
         // To run multiple commands at the same time,
         // use addParallel()
         // e.g. addParallel(new Command1());
@@ -25,8 +25,16 @@ public class AutoRun extends CommandGroup {
         // e.g. if Command1 requires chassis, and Command2 requires arm,
         // a CommandGroup containing them would require both the chassis and the
         // arm.
-    	addSequential(new Lift(17));
-    	addSequential(new Drive(-100));
-    	addSequential(new Lift(-17));
-    }
+    	if (dist > 0){
+    		double angle =Math.acos( (DriveTrain.WHEELBASE - dist) / 2 / DriveTrain.WHEELBASE) / Math.PI * 180;
+    		addSequential(new Pivot(angle, true));
+        	addSequential(new Turn(-2*angle));
+    		addSequential(new Pivot(angle, false));
+    	} else {
+    		double angle =Math.acos( (DriveTrain.WHEELBASE + dist) / 2 / DriveTrain.WHEELBASE) / Math.PI * 180;
+    		addSequential(new Pivot(-angle, false));
+        	addSequential(new Turn(2*angle));
+    		addSequential(new Pivot(-angle, true));
+    	}
+     }
 }

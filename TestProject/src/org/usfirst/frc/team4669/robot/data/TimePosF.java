@@ -3,7 +3,7 @@ package org.usfirst.frc.team4669.robot.data;
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.command.Subsystem;
 
-public class TimePos extends Subsystem {
+public class TimePosF extends Subsystem {
 	public CANTalon drive;
 	public PIDParam pidP;
 	public double maxV = 19.4; // ticks per 1/100 sec
@@ -13,19 +13,19 @@ public class TimePos extends Subsystem {
 	protected long startTime;
 	protected boolean isPos;
 	protected boolean last = false;
-	protected int clearCount = 0;
 	protected int endMax;
 	protected int endMin;
 	protected int accTime;
 	protected int decTime;
 	protected int endTime;
-	protected double beginPos;
 	protected double accPos;
 	protected double endPos;
 	protected double midV;
+	protected boolean isResetting=false;
+	protected int clearCount = 0;
 	
 	
-	public TimePos(int id, boolean brakeMode) {
+	public TimePosF(int id, boolean brakeMode) {
 		super();
 		drive = new CANTalon(id);
 		drive.changeControlMode(CANTalon.ControlMode.Position);
@@ -40,12 +40,25 @@ public class TimePos extends Subsystem {
 	}
 	
 	public void execute(long time) {
+		if (isResetting) {
+			if (drive.getPosition()!=0){
+				++clearCount;
+				if (clearCount > 10){
+					resetPos();
+					clearCount=0;
+				}
+				return;
+			}
+			isResetting=false;
+			drive.ClearIaccum();
+			startTime = System.currentTimeMillis();
+		}
 		long t = time - startTime;
 		if (t < accTime) {
 			if (isPos) {
-				doPos(.5 * acc * t * t/ 10000.0+ beginPos);
+				doPos(.5 * acc * t * t/ 10000.0);
 			} else {
-				doPos(-.5 * acc * t * t/ 10000.0+ beginPos);
+				doPos(-.5 * acc * t * t/ 10000.0);
 			}
 		} else if (t < decTime) {
 			double mt = t - accTime;
@@ -70,20 +83,19 @@ public class TimePos extends Subsystem {
 		drive.set(p);
 	}
 	
-	public void moveTo(double absPos) {
+	public void moveOff(double offset) {
 		if (pidP != null) {
 			drive.setPID(pidP.P, pidP.I, pidP.D, pidP.F, pidP.IZone, pidP.Ramp, 1);
 			drive.setProfile(1);
 		}
-		double curPos = drive.getEncPosition();
-		drive.ClearIaccum();
-		clearCount = 0;
-		endPos = absPos;
+		isResetting=true;
+		resetPos();
+		endPos = offset/2.15;
 		int t  = (int) Math.round(endPos); 
 		endMax = t + precision;
 		endMin = t - precision;
 		midV = maxV /10;
-		double dist = endPos -curPos;
+		double dist = endPos;
 		isPos = dist > 0;
 		if (dist < 0) {
 			dist = -dist;
@@ -101,37 +113,36 @@ public class TimePos extends Subsystem {
 			d = v / dec;
 			m = 0;
 		}
-		beginPos= curPos;
 		if (isPos) {
-			accPos = .5 * acc * 100 * a * a + curPos;
+			accPos = .5 * acc * 100 * a * a ;
 		} else {
-			accPos = -.5 * acc * 100 * a * a + curPos;
+			accPos = -.5 * acc * 100 * a * a ;
 		}
 		accTime = (int) Math.round(a * 1000);
 		decTime = (int) Math.round((a+m) * 1000);
 		endTime = (int) Math.round((a+m+d) * 1000);
-		startTime = System.currentTimeMillis();
 	}
 	
 	public boolean isFinished() {
-		int pos = drive.getEncPosition();
-		if (pos <= endMax && pos >= endMin ) {
-			return true;
-		}
-		if (System.currentTimeMillis() - startTime >2000+endTime) { 
-			return true;
+		if (!isResetting){
+			int pos = (int) Math.round(drive.getPosition());
+			if (pos <= endMax && pos >= endMin ) {
+				return true;
+			}
+			if (System.currentTimeMillis() - startTime >2000+endTime) { 
+				return true;
+			}
 		}
 		return  false;
 	}
 	
 	public void stop() {
-		drive.getEncPosition();
 	}
 	
-	public void interrupted() {
-		drive.getEncPosition();
-	}
-	
+    public void interrupted() {
+    	resetPos();
+    }
+    
 	@Override
 	protected void initDefaultCommand() {
 	}

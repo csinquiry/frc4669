@@ -40,6 +40,8 @@ public class DriveV extends Subsystem {
 	protected int decDist1;
 	protected boolean last = false;
 	protected int clearCount = 0;
+	protected boolean enable = true;
+	protected boolean enable1 = true;
 	
 	public DriveV(int id, boolean brakeMode, int id1, boolean brakeMode1) {
 		super();
@@ -55,6 +57,15 @@ public class DriveV extends Subsystem {
 
 	}
 
+	public void setPositionMode(){
+		drive1.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder);
+		drive1.changeControlMode(CANTalon.ControlMode.Speed);
+		drive.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder);
+		drive.changeControlMode(CANTalon.ControlMode.Speed);
+		drive1.enableBrakeMode(false);
+		drive.enableBrakeMode(false);
+	}
+	
 	protected void calcProfile() {
 		if (minV != minVL || maxV != maxVL || acc != accL || intervalsPerSec != intervalsL
 				|| div != divL) {
@@ -99,114 +110,122 @@ public class DriveV extends Subsystem {
 			long t = time - startTime;
 			if (t < accTime) {
 				int x = (int) ((t - (t % periodMs))/ periodMs);
-				if (isPositive) {
-					v = velocity[x];
-					drive.set(v);
-					SmartDashboard.putNumber("rightSet", v);
-				} else {
-					v = -velocity[x];
-					drive.set(v);
-					SmartDashboard.putNumber("rightSet", v);
+				if (enable) {
+					if (isPositive) {
+						v = velocity[x];
+						drive.set(v);
+						SmartDashboard.putNumber("rightSet", v);
+					} else {
+						v = -velocity[x];
+						drive.set(v);
+						SmartDashboard.putNumber("rightSet", v);
+					}
 				}
-				if (isPos1) {
-					v1 = velocity[x];
-					drive1.set(v1);
-					SmartDashboard.putNumber("leftSet", v1);
-				} else {
-					v1 = -velocity[x];
-					drive1.set(v1);
-					SmartDashboard.putNumber("leftSet", v1);
+				if (enable1) {
+					if (isPos1) {
+						v1 = velocity[x];
+						drive1.set(v1);
+						SmartDashboard.putNumber("leftSet", v1);
+					} else {
+						v1 = -velocity[x];
+						drive1.set(v1);
+						SmartDashboard.putNumber("leftSet", v1);
+					}
 				}
 			} else {
-				int p = drive.getEncPosition();
-				SmartDashboard.putNumber("rightDiff", endPos-p);
-				if (isPositive) {
-					if (p < decDist ) {
-						if (last) {
-							SmartDashboard.putNumber("rightSet", v*1.001);
+				if (enable) {
+					int p = drive.getEncPosition();
+					SmartDashboard.putNumber("rightDiff", endPos-p);
+					if (isPositive) {
+						if (p < decDist ) {
+							if (last) {
+								SmartDashboard.putNumber("rightSet", v*1.001);
+							} else {
+								SmartDashboard.putNumber("rightSet", v);
+							}
 						} else {
-							SmartDashboard.putNumber("rightSet", v);
+							if (p >= endPos) {
+								drive.set(0);
+								SmartDashboard.putNumber("rightSet", 0);
+							} else {
+								int pd = endPos - p;
+								while (position[idx] > pd && idx > 0) {
+									--idx;
+								}
+								v = velocity[idx];
+								drive.set(v);
+								SmartDashboard.putNumber("rightSet", v);
+							}
 						}
 					} else {
-						if (p >= endPos) {
-							drive.set(0);
-							SmartDashboard.putNumber("rightSet", 0);
-						} else {
-							int pd = endPos - p;
-							while (position[idx] > pd && idx > 0) {
-								--idx;
+						if (p > decDist ) {
+							if (last) {
+								SmartDashboard.putNumber("rightSet", v*1.001);
+							} else {
+								SmartDashboard.putNumber("rightSet", v);
 							}
-							v = velocity[idx];
-							drive.set(v);
-							SmartDashboard.putNumber("rightSet", v);
-						}
-					}
-				} else {
-					if (p > decDist ) {
-						if (last) {
-							SmartDashboard.putNumber("rightSet", v*1.001);
 						} else {
-							SmartDashboard.putNumber("rightSet", v);
-						}
-					} else {
-						if (p <= endPos) {
-							drive.set(0);
-							SmartDashboard.putNumber("rightSet", 0);
-						} else {
-							int pd = p - endPos;
-							while (position[idx] > pd && idx > 0) {
-								--idx;
+							if (p <= endPos) {
+								drive.set(0);
+								SmartDashboard.putNumber("rightSet", 0);
+							} else {
+								int pd = p - endPos;
+								while (position[idx] > pd && idx > 0) {
+									--idx;
+								}
+								v = -velocity[idx];
+								drive.set(v);
+								SmartDashboard.putNumber("rightSet", v);
 							}
-							v = -velocity[idx];
-							drive.set(v);
-							SmartDashboard.putNumber("rightSet", v);
 						}
 					}
 				}
-				int p1 = drive1.getEncPosition();
-				SmartDashboard.putNumber("leftDiff", endPos1-p1);
-				if (isPos1) {
-					if (p1 < decDist1 ) {
-						if (last) {
-							SmartDashboard.putNumber("leftSet", v1* 1.001);
-						} else {
-							SmartDashboard.putNumber("leftSet", v1);
-						}
-						last = ! last;
-					} else {
-						if (p1 >= endPos1) {
-							drive1.set(0);
-							SmartDashboard.putNumber("leftSet", 0);
-						} else {
-							int pd = endPos1 - p1;
-							while (position[idx1] > pd && idx1 > 0) {
-								--idx1;
+				if (enable1) {
+					int p1 = drive1.getEncPosition();
+					SmartDashboard.putNumber("leftDiff", endPos1-p1);
+					if (isPos1) {
+						if (p1 < decDist1 ) {
+							if (last) {
+								SmartDashboard.putNumber("leftSet", v1* 1.001);
+							} else {
+								SmartDashboard.putNumber("leftSet", v1);
 							}
-							v1 = velocity[idx1];
-							drive1.set(v1);
-							SmartDashboard.putNumber("leftSet", v1);
-						}
-					}
-				} else {
-					if (p1 > decDist1 ) {
-						if (last) {
-							SmartDashboard.putNumber("leftSet", v1* 1.001);
+							last = ! last;
 						} else {
-							SmartDashboard.putNumber("leftSet", v1);
-						}
-						last = ! last;
-					} else {
-						if (p1 <= endPos1) {
-							drive1.set(0);
-							SmartDashboard.putNumber("leftSet", 0);
-						} else {
-							int pd = p1 - endPos1;
-							while (position[idx1] > pd && idx1 > 0) {
-								--idx1;
+							if (p1 >= endPos1) {
+								drive1.set(0);
+								SmartDashboard.putNumber("leftSet", 0);
+							} else {
+								int pd = endPos1 - p1;
+								while (position[idx1] > pd && idx1 > 0) {
+									--idx1;
+								}
+								v1 = velocity[idx1];
+								drive1.set(v1);
+								SmartDashboard.putNumber("leftSet", v1);
 							}
-							v1 = -velocity[idx1];
-							drive1.set(v1);
-							SmartDashboard.putNumber("leftSet", v1);
+						}
+					} else {
+						if (p1 > decDist1 ) {
+							if (last) {
+								SmartDashboard.putNumber("leftSet", v1* 1.001);
+							} else {
+								SmartDashboard.putNumber("leftSet", v1);
+							}
+							last = ! last;
+						} else {
+							if (p1 <= endPos1) {
+								drive1.set(0);
+								SmartDashboard.putNumber("leftSet", 0);
+							} else {
+								int pd = p1 - endPos1;
+								while (position[idx1] > pd && idx1 > 0) {
+									--idx1;
+								}
+								v1 = -velocity[idx1];
+								drive1.set(v1);
+								SmartDashboard.putNumber("leftSet", v1);
+							}
 						}
 					}
 				}
@@ -214,7 +233,9 @@ public class DriveV extends Subsystem {
 		}
 	}
 	
-	public void move(double ticks) {
+	public void move(double ticks, boolean enb, boolean enb1) {
+		enable=enb;
+		enable1=enb1;
 		if (pidP != null) {
 			drive.setPID(pidP.P, pidP.I, pidP.D, pidP.F, pidP.IZone, pidP.Ramp, 1);
 			drive.setProfile(1);
@@ -280,22 +301,26 @@ public class DriveV extends Subsystem {
 		if (state == 1) {
 			return false;
 		}
-		if (isPositive) {
-			if (drive.getEncPosition() <= endPos) {
-				return false;
-			}
-		} else {
-			if (drive.getEncPosition() >= endPos) {
-				return false;
+		if (enable) {
+			if (isPositive) {
+				if (drive.getEncPosition() <= endPos) {
+					return false;
+				}
+			} else {
+				if (drive.getEncPosition() >= endPos) {
+					return false;
+				}
 			}
 		}
-		if (isPos1) {
-			if (drive1.getEncPosition() <= endPos1) {
-				return false;
-			}
-		} else {
-			if (drive1.getEncPosition() >= endPos1) {
-				return false;
+		if (enable1) {
+			if (isPos1) {
+				if (drive1.getEncPosition() <= endPos1) {
+					return false;
+				}
+			} else {
+				if (drive1.getEncPosition() >= endPos1) {
+					return false;
+				}
 			}
 		}
 		return  true;

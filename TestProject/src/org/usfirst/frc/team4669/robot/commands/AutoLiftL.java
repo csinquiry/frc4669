@@ -6,9 +6,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 /**
  *
  */
-public class AutoRun extends CommandGroup {
+public class AutoLiftL extends CommandGroup {
     
-    public  AutoRun() {
+	public AutoLiftL() {
         // Add Commands here:
         // e.g. addSequential(new Command1());
         //      addSequential(new Command2());
@@ -25,8 +25,8 @@ public class AutoRun extends CommandGroup {
         // e.g. if Command1 requires chassis, and Command2 requires arm,
         // a CommandGroup containing them would require both the chassis and the
         // arm.
-    	addSequential(new Lift(17));
-    	addSequential(new Drive(-100));
-    	addSequential(new Lift(-17));
-    }
+		addSequential(new Lift(17));
+		addSequential(new Turn(45));
+		addSequential(new Drive(20));
+	}
 }

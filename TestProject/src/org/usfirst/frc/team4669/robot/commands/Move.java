@@ -21,8 +21,13 @@ public class Move extends Command {
     	Robot.driveTrain.turn(angle);
     }
     
+    public void pivot(double angle, boolean isRight) {
+    	Robot.driveTrain.pivot(angle, isRight);
+    }
+    
     // Called just before this Command runs the first time
     protected void initialize() {
+    	Robot.driveTrain.setPositionMode();
     	Robot.driveTrain.pidP = PIDParam.DRIVE_RIGHT;
     	Robot.driveTrain.pidP1 = PIDParam.DRIVE_LEFT;
     	Robot.driveTrain.maxV= 800;

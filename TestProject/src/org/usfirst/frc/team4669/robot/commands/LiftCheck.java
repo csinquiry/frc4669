@@ -29,7 +29,7 @@ public class LiftCheck extends Command {
     	Robot.lift.acc= (Double.parseDouble(SmartDashboard.getString("accL")));
     	Robot.lift.dec= (Double.parseDouble(SmartDashboard.getString("decL")));
     	double dist = Double.parseDouble(SmartDashboard.getString("distance"));
-      	Robot.lift.moveTo(dist);
+      	Robot.lift.moveOff(dist);
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -50,6 +50,6 @@ public class LiftCheck extends Command {
     // Called when another command which requires one or more of the same
     // subsystems is scheduled to run
     protected void interrupted() {
-    	Robot.lift.stop();
+    	Robot.lift.interrupted();
     }
 }

@@ -4,23 +4,29 @@ package org.usfirst.frc.team4669.robot;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.usfirst.frc.team4669.robot.commands.AutoLift;
+import org.usfirst.frc.team4669.robot.commands.AutoLiftL;
+import org.usfirst.frc.team4669.robot.commands.AutoLiftNoMove;
+import org.usfirst.frc.team4669.robot.commands.AutoLowLift;
+import org.usfirst.frc.team4669.robot.commands.AutoLowLiftKeep;
+import org.usfirst.frc.team4669.robot.commands.AutoLowLiftNoMove;
+import org.usfirst.frc.team4669.robot.commands.AutoNone;
 import org.usfirst.frc.team4669.robot.commands.AutoRun;
-import org.usfirst.frc.team4669.robot.subsystems.BackupElevator;
-import org.usfirst.frc.team4669.robot.subsystems.Camera;
 import org.usfirst.frc.team4669.robot.subsystems.DriveTrain;
 import org.usfirst.frc.team4669.robot.subsystems.DriveTrain1;
 import org.usfirst.frc.team4669.robot.subsystems.I2CSensors;
-import org.usfirst.frc.team4669.robot.subsystems.SensorSubsystem;
 import org.usfirst.frc.team4669.robot.subsystems.TestLift;
-import org.usfirst.frc.team4669.robot.subsystems.TestLift1;
+import org.usfirst.frc.team4669.robot.subsystems.TestLift1F;
 
 import com.kauailabs.navx_mxp.AHRS;
 
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -33,16 +39,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends IterativeRobot {
 
 	public static  DriveTrain driveTrain = new DriveTrain();
-	public static DriveTrain1 driveTrain1 = new DriveTrain1();
+	public static DriveTrain1 driveTrain1;
 	public static TestLift lift = new TestLift();
-	public static TestLift1 lift1 = new TestLift1();
-//	public static BacupElevator liftBackup = new BackupElevator();
+//	public static TestLiftF lift = new TestLiftF();
+	public static TestLift1F lift1 = new TestLift1F();
 	public static  I2CSensors sensors = new I2CSensors();
-	public static Camera camera = new Camera();
-	public static SensorSubsystem sensorSubsystem = new SensorSubsystem();
 	public static OI oi;
+    public static CameraServer server;
 
     Command autonomousCommand;
+    SendableChooser autoChooser;
+    
     SerialPort serial_port;
     public static AHRS imu;                   // This class can only be used w/the navX MXP.
     boolean first_iteration;
@@ -76,14 +83,19 @@ public class Robot extends IterativeRobot {
 				Logger.getLogger(Robot.class.getCanonicalName()).log(Level.SEVERE, ex.getMessage(), ex);
 			}
 		}
-   }
+	       server = CameraServer.getInstance();
+	       server.setSize(1);
+	        server.setQuality(30);
+	        server.startAutomaticCapture("cam0");
+	 //       server.startAutomaticCapture("cam2");
+ }
 
 	/**
      * This function is run when the robot is first started up and should be
      * used for any initialization code.
      */
     public void robotInit() {
-        autonomousCommand = new AutoRun();
+    //   autonomousCommand = new AutoRun();
     	if (sensors.setup()) {
         	SmartDashboard.putString("sensorInit", "Ok");
     	} else {
@@ -125,7 +137,18 @@ public class Robot extends IterativeRobot {
 //		SmartDashboard.putString("d2", ".00001");
 //		SmartDashboard.putString("izone2", "1000");
 //		SmartDashboard.putString("f2", "0");
-		SmartDashboard.putString("ramp2", "48");
+//		SmartDashboard.putString("ramp2", "48");
+		autoChooser = new SendableChooser();
+		autoChooser.addDefault("Bin and back", new AutoRun());
+		autoChooser.addObject("None", new AutoNone());
+		autoChooser.addObject("Lift Turn Right", new AutoLift());
+		autoChooser.addObject("Lift Turn Left", new AutoLiftL());
+		autoChooser.addObject("Low Lift ", new AutoLowLift());
+		autoChooser.addObject("Low Lift Keep", new AutoLowLiftKeep());
+		autoChooser.addObject("Lift No Move", new AutoLiftNoMove());
+		autoChooser.addObject("Low LIft No Move", new AutoLowLiftNoMove());
+	//	autoChooser.addObject("Dance", new AutoDance());
+		SmartDashboard.putData("Autonomous mode chooser", autoChooser);
     }
 
 	public void disabledPeriodic() {
@@ -134,6 +157,7 @@ public class Robot extends IterativeRobot {
 
     public void autonomousInit() {
         // schedule the autonomous command (example)
+    	autonomousCommand = (Command) autoChooser.getSelected();
         if (autonomousCommand != null) autonomousCommand.start();
     }
 
@@ -141,7 +165,7 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during autonomous
      */
     public void autonomousPeriodic() {
-        Scheduler.getInstance().run();
+       Scheduler.getInstance().run();
     }
 
     public void teleopInit() {
@@ -149,6 +173,11 @@ public class Robot extends IterativeRobot {
         // teleop starts running. If you want the autonomous to 
         // continue until interrupted by another command, remove
         // this line or comment it out.
+    	
+    	//shift 
+    	driveTrain1 = new DriveTrain1();
+  //  	Scheduler.getInstance().add(new DriveWithJoysticksU() );
+    	
         if (autonomousCommand != null) autonomousCommand.cancel();
     }
 
